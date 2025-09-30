@@ -22,4 +22,11 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
     token = AuthService.create_token_for_user(user)
-    return {"access_token": token, "token_type": "bearer"}
+    db.refresh(user)
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": UserRead.model_validate(user)
+    }
+
+

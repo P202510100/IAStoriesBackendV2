@@ -14,9 +14,10 @@ class AuthService:
     @staticmethod
     def register_user(db: Session, user_in: UserCreate) -> UserModel:
         # verificar duplicado
-        existing = user_repo.get_by_email(db, user_in.email)
+        existing = user_repo.get_by_email(db, str(user_in.email))
         if existing:
             raise ValueError("Email ya registrado")
+
         hashed_pw = get_password_hash(user_in.password)
 
         user = user_repo.create(db, {
@@ -27,16 +28,28 @@ class AuthService:
         })
 
         # crear perfil según tipo
-        if user.tipo == UserType.student:
-            student_repo.create(db, {"user_id": user.id})
-        elif user.tipo == UserType.teacher:
-            teacher_repo.create(db, {"user_id": user.id})
+        if user.tipo == UserType.student and user_in.student_profile:
+            student_repo.create(
+                db,
+                {
+                    "user_id": user.id,
+                    **user_in.student_profile.dict()
+                }
+            )
+        elif user.tipo == UserType.teacher and user_in.teacher_profile:
+            teacher_repo.create(
+                db,
+                {
+                    "user_id": user.id,
+                    **user_in.teacher_profile.dict()
+                }
+            )
 
         return user
 
     @staticmethod
     def authenticate_user(db: Session, email: str, password: str) -> Optional[UserModel]:
-        user = user_repo.get_by_email(db, email)
+        user = user_repo.get_by_email(db, str(email))
         if not user:
             return None
         if not verify_password(password, user.password):
