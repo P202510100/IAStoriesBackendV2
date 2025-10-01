@@ -1,3 +1,5 @@
+from typing import List
+
 from sqlalchemy.orm import Session
 from app.db.repositories import StudentRepository
 from app.schemas.student import StudentUpdate
@@ -16,3 +18,7 @@ class StudentService:
         data = payload.dict(exclude_unset=True)
         data["last_updated_date"] = datetime.utcnow()
         return student_repo.update(db, student, data)
+
+    @staticmethod
+    def list_users(db: Session, skip: int = 0, limit: int = 50) -> List[StudentModel]:
+        return student_repo.list(db, skip=skip, limit=limit)
