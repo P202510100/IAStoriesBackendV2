@@ -1,7 +1,13 @@
 from sqlalchemy.orm import Session
-from app.db.repositories import StoryRepository
+from app.db.repositories import StoryRepository, StudentRepository
+import json
+
+from app.schemas import StoryGenerateRequest, RecordCreate, StoryRead, story
+from app.services.ai_service import generar_historia_y_preguntas
+from app.services.record_service import RecordService
 
 story_repo = StoryRepository()
+student_repo = StudentRepository()
 
 class StoryService:
     @staticmethod
@@ -9,5 +15,58 @@ class StoryService:
         return story_repo.create(db, data)
 
     @staticmethod
+    def generate_story(db: Session, data: StoryGenerateRequest):
+        # 1. Obtener al alumno (para sacar su grado escolar)
+        student = student_repo.get_by_user_id(db, data.user_id)
+        if not student:
+            raise ValueError("Alumno no encontrado")
+
+        grado = student.current_grade or "sin grado"
+
+        # 2. Generar historia con IA usando los datos que vienen del frontend
+        ai_result = generar_historia_y_preguntas(
+            nombre=data.nombre,
+            edad=data.edad,
+            elementos=data.elementos,
+            grado=grado,
+            topic=data.topic
+        )
+        # 3. Preparar objeto para BD
+        story_data = {
+            "title": ai_result["title"],
+            "content": ai_result["content"],
+            "topic": data.topic,
+            "question_answer": ai_result.get("questions", []),
+            "story_metadata": ai_result.get("story_metadata", {}),
+            "characters": ai_result.get("characters", []),
+            "student_id": student.id,
+        }
+
+        story = story_repo.create(db, story_data)
+
+        # 4. Crear record asociado en estado IN_PROGRESS
+        record_payload = RecordCreate(
+            story_id=story.id,
+            correct_answers=0,
+            total_questions=len(ai_result.get("questions", [])),
+            points=0
+        )
+
+        record = RecordService.create_record_for_student(db, data.user_id ,record_payload)
+
+        story_read = StoryRead.model_validate(story)
+        story_read.record_id = record.id
+
+        # 5. Retornar historia + record_id
+        return story_read
+
+
+
+    @staticmethod
     def list_stories(db: Session, skip: int = 0, limit: int = 50):
         return story_repo.list(db, skip=skip, limit=limit)
+
+
+    @staticmethod
+    def list_stories_by_student(db: Session, student_id: int, skip: int = 0, limit: int = 50):
+        return story_repo.list_by_student(db, student_id, skip=skip, limit=limit)

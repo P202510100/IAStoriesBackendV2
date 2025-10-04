@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     DB_NAME: str
     SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
+    OPENAI_API_KEY: str
 
     class Config:
         env_file = ".env"

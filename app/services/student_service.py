@@ -22,3 +22,12 @@ class StudentService:
     @staticmethod
     def list_users(db: Session, skip: int = 0, limit: int = 50) -> List[StudentModel]:
         return student_repo.list(db, skip=skip, limit=limit)
+
+    @staticmethod
+    def get_student_detail(db: Session, student_id: int):
+        student = student_repo.get_with_user(db, student_id)
+        if not student:
+            raise ValueError("Estudiante no encontrado")
+        return student
+
+

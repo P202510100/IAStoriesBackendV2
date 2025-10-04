@@ -4,12 +4,12 @@ from typing import List
 
 from app.db.database import get_db
 from app.services.student_service import StudentService
-from app.schemas.student import StudentRead, StudentUpdate
+from app.schemas.student import StudentRead, StudentUpdate, StudentDetail
 
 router = APIRouter()
 
-@router.get("/{user_id}", response_model=StudentRead)
-def get_student(user_id: int, db: Session = Depends(get_db)):
+@router.get("/by-user/{user_id}", response_model=StudentRead)
+def get_student_by_user(user_id: int, db: Session = Depends(get_db)):
     student = StudentService.get_by_user_id(db, user_id)
     if not student:
         raise HTTPException(status_code=404, detail="Estudiante no encontrado")
@@ -25,3 +25,10 @@ def update_student(user_id: int, payload: StudentUpdate, db: Session = Depends(g
 @router.get("/", response_model=List[StudentRead])
 def list_students(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
     return StudentService.list_users(db, skip, limit)
+
+@router.get("/{student_id}", response_model=StudentDetail)
+def get_student_detail(student_id: int, db: Session = Depends(get_db)):
+    try:
+        return StudentService.get_student_detail(db, student_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))

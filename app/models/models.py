@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Date, Text, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Date, Text, Enum, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -7,6 +7,10 @@ from app.db.base import Base
 class UserType(enum.Enum):
     student = "student"
     teacher = "teacher"
+
+class RecordStatus(enum.Enum):
+    IN_PROGRESS = "IN_PROGRESS"
+    COMPLETED = "COMPLETED"
 
 class User(Base):
     __tablename__ = "users"
@@ -56,10 +60,10 @@ class Story(Base):
     title = Column(String(255), nullable=False)
     content = Column(Text)
     topic = Column(String(100))
-    question_answer = Column(Text)
-    story_metadata = Column(Text)
-    characters = Column(Text)
-    alumno_id = Column(Integer, ForeignKey("students.id"))
+    question_answer = Column(JSON)
+    story_metadata = Column(JSON)
+    characters = Column(JSON)
+    student_id = Column(Integer, ForeignKey("students.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Record(Base):
@@ -71,9 +75,13 @@ class Record(Base):
     points = Column(Integer, default=0)
     correct_answers = Column(Integer, default=0)
     total_questions = Column(Integer, default=0)
-    completed_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+    status = Column(Enum(RecordStatus), default=RecordStatus.IN_PROGRESS)
 
     student = relationship("Student", back_populates="records")
+    story = relationship("Story")
+    answers = relationship("Answer", back_populates="record", cascade="all, delete-orphan")
+
 
 class Enrollment(Base):
     __tablename__ = "enrollments"
@@ -81,3 +89,17 @@ class Enrollment(Base):
     id = Column(Integer, primary_key=True, index=True)
     teacher_id = Column(Integer, ForeignKey("teachers.id"))
     student_id = Column(Integer, ForeignKey("students.id"))
+
+class Answer(Base):
+    __tablename__ = "answers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    record_id = Column(Integer, ForeignKey("records.id"), nullable=False)
+    question_index = Column(Integer, nullable=False)  # índice de la pregunta
+    response = Column(Text, nullable=True)  # texto o índice seleccionado
+    is_correct = Column(Boolean, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    record = relationship("Record", back_populates="answers")
+

@@ -34,6 +34,18 @@ class StudentRead(StudentBase):
     class Config:
         from_attributes = True
 
+class StudentDetail(BaseModel):
+    id: int
+    edad: Optional[int] = None
+    current_grade: Optional[str]
+    current_level: Optional[int]
+    interests: Optional[str]
+    total_points: int
+    last_updated_date: Optional[datetime]
+    user: UserBase  # relación incluida
+
+    class Config:
+        orm_mode = True
 
 class StudentUpdate(StudentBase):
     current_level: Optional[int]

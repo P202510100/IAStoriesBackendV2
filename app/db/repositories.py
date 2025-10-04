@@ -1,6 +1,6 @@
 from app.db.crud import CRUDRepository
-from app.models.models import User, Student, Teacher, Story, Record, Enrollment
-from sqlalchemy.orm import Session
+from app.models.models import User, Student, Teacher, Story, Record, Enrollment, Answer
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional
 from sqlalchemy import and_
 
@@ -18,6 +18,17 @@ class StudentRepository(CRUDRepository[Student]):
     def get_by_user_id(self, db: Session, user_id: int) -> Optional[Student]:
         return db.query(Student).filter(Student.user_id == user_id).first()
 
+    def get_with_user(self, db: Session, student_id: int) -> Optional[Student]:
+        """
+        Retorna el Student con la relación User cargada.
+        """
+        return (
+            db.query(Student)
+            .options(joinedload(Student.user))  # 🔑 esto carga el user asociado
+            .filter(Student.id == student_id)
+            .first()
+        )
+
 class TeacherRepository(CRUDRepository[Teacher]):
     def __init__(self):
         super().__init__(Teacher)
@@ -29,6 +40,14 @@ class StoryRepository(CRUDRepository[Story]):
     def __init__(self):
         super().__init__(Story)
 
+    def list_by_student(self, db: Session, student_id: int, skip: int = 0, limit: int = 50):
+        return (
+            db.query(Story)
+            .filter(Story.student_id == student_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 class RecordRepository(CRUDRepository[Record]):
     def __init__(self):
         super().__init__(Record)
@@ -99,3 +118,20 @@ class EnrollmentRepository(CRUDRepository[Enrollment]):
                 "matriculado": row.enrollment_id is not None
             })
         return result
+
+class AnswerRepository(CRUDRepository[Answer]):
+    def __init__(self):
+        super().__init__(Answer)
+
+    def get_by_record_and_question(self, db: Session, record_id: int, question_index: int) -> Optional[Answer]:
+        return (
+            db.query(Answer)
+            .filter(
+                Answer.record_id == record_id,
+                Answer.question_index == question_index
+            )
+            .first()
+        )
+
+    def list_by_record(self, db: Session, record_id: int):
+        return db.query(Answer).filter(Answer.record_id == record_id).all()

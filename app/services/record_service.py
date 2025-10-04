@@ -1,12 +1,17 @@
 from sqlalchemy.orm import Session
-from app.db.repositories import RecordRepository, StudentRepository, StoryRepository
-from app.schemas.record import RecordCreate
+from app.db.repositories import RecordRepository, StudentRepository, StoryRepository, AnswerRepository
+from app.schemas.answer import AnswerCreate
+from app.schemas.record import RecordCreate, RecordUpdate
 from app.models.models import Record as RecordModel
+from app.models.models import Answer
 from datetime import datetime
+from sqlalchemy.orm import joinedload
+from typing import Optional, List
 
 record_repo = RecordRepository()
 student_repo = StudentRepository()
 story_repo = StoryRepository()
+answer_repo = AnswerRepository()
 
 class RecordService:
     @staticmethod
@@ -27,13 +32,99 @@ class RecordService:
             "points": points,
             "correct_answers": payload.correct_answers,
             "total_questions": payload.total_questions,
-            "completed_at": datetime.utcnow()
-        })
-
-        # actualizar puntos del estudiante
-        student_repo.update(db, student, {
-            "total_points": student.total_points + points,
-            "last_updated_date": datetime.utcnow()
+            "status": "IN_PROGRESS",
+            "completed_at": None
         })
 
         return record
+
+    @staticmethod
+    def update_record(db: Session, record_id: int, payload: RecordUpdate) -> RecordModel:
+        record = record_repo.get(db, record_id)
+        if not record:
+            raise ValueError("Record no encontrado")
+
+        update_data = payload.dict(exclude_unset=True)
+
+        # Si marcan como COMPLETED
+        if update_data.get("status") == "COMPLETED":
+            update_data["completed_at"] = datetime.utcnow()
+
+            # Calcular puntos y correctas a partir de las respuestas
+            answers = answer_repo.list_by_record(db, record_id)  # <-- necesitas este método en el repo
+            correct_answers = sum(1 for a in answers if a.is_correct)
+            total_questions = len(record.story.question_answer or [])
+            points = correct_answers  # lógica de puntos, aquí igual a correctas
+
+            update_data["correct_answers"] = correct_answers
+            update_data["total_questions"] = total_questions
+            update_data["points"] = points
+
+            # actualizamos puntos acumulados del estudiante
+            student = student_repo.get(db, record.student_id)
+            if student:
+                student_repo.update(db, student, {
+                    "total_points": student.total_points + points,
+                    "last_updated_date": datetime.utcnow()
+                })
+
+        record = record_repo.update(db, record, update_data)
+        return record
+
+    @staticmethod
+    def save_answer(db: Session, record_id: int, question_index: int, response: str,
+                    is_correct: bool | None = None) -> Answer:
+        record = record_repo.get(db, record_id)
+        if not record:
+            raise ValueError("Record no encontrado")
+
+        # ¿Ya había respuesta para esa pregunta?
+        answer = answer_repo.get_by_record_and_question(db, record_id, question_index)
+
+        if answer:
+            # Actualizar
+            answer = answer_repo.update(db, answer, {
+                "response": response,
+                "is_correct": is_correct
+            })
+        else:
+            # Crear nueva
+            answer = answer_repo.create(db, {
+                "record_id": record_id,
+                "question_index": question_index,
+                "response": response,
+                "is_correct": is_correct
+            })
+
+        return answer
+
+    @staticmethod
+    def get_record_with_answers(db: Session, record_id: int) -> RecordModel:
+        record = (
+            db.query(RecordModel)
+            .options(joinedload(RecordModel.story), joinedload(RecordModel.answers))
+            .filter(RecordModel.id == record_id)
+            .first()
+        )
+        return record
+
+    @staticmethod
+    def save_progress_bulk(db: Session, record_id: int, answers: List[AnswerCreate]):
+        record = record_repo.get(db, record_id)
+        if not record:
+            raise ValueError("Record no encontrado")
+
+        saved = []
+        for ans in answers:
+            saved_answer = RecordService.save_answer(
+                db=db,
+                record_id=record_id,
+                question_index=ans.question_index,
+                response=ans.response,
+                is_correct=ans.is_correct
+            )
+            saved.append(saved_answer)
+
+        # Hacemos commit al final para evitar race conditions
+        db.commit()
+        return saved
