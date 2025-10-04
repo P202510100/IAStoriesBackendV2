@@ -35,3 +35,23 @@ class EnrollmentService:
     def list_students_for_teacher(db: Session, teacher_id: int):
         return enrollment_repo.get_students_for_teacher(db, teacher_id)
 
+    @staticmethod
+    def unenroll_student(db: Session, teacher_id: int, student_id: int):
+        # 1️⃣ Validar existencia
+        teacher = teacher_repo.get(db, teacher_id)
+        student = student_repo.get(db, student_id)
+
+        if not teacher or not student:
+            raise ValueError("Teacher o Student no encontrado")
+
+        # 2️⃣ Verificar que exista la matrícula
+        enrollment = enrollment_repo.get_by_student_and_teacher(db, student_id, teacher_id)
+        if not enrollment:
+            raise ValueError("El estudiante no está inscrito con este docente")
+
+        # 3️⃣ Eliminar la matrícula
+        db.delete(enrollment)
+        db.commit()
+
+        return {"message": "Estudiante desmatriculado correctamente"}
+

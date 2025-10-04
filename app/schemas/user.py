@@ -2,8 +2,9 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime, date
 from app.models.models import UserType
-from app.schemas.student import StudentRead
-from app.schemas.teacher import TeacherRead
+from app.schemas.student import StudentRead, StudentUpdate
+from app.schemas.teacher import TeacherRead, TeacherUpdate
+
 
 # Perfil estudiante
 class StudentProfileCreate(BaseModel):
@@ -44,3 +45,6 @@ class UserRead(UserBase):
 class UserUpdate(BaseModel):
     fullname: Optional[str]
     activo: Optional[bool]
+    email: Optional[str]
+    student_profile: Optional[StudentUpdate] = None
+    teacher_profile: Optional[TeacherUpdate] = None

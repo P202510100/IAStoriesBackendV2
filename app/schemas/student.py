@@ -48,4 +48,7 @@ class StudentDetail(BaseModel):
         orm_mode = True
 
 class StudentUpdate(StudentBase):
-    current_level: Optional[int]
+    birth_date: Optional[date] = None
+    current_grade: Optional[str] = None
+    interests: Optional[str] = None
+    current_level: Optional[int] = None

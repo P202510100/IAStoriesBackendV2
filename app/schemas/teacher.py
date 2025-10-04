@@ -22,4 +22,7 @@ class TeacherRead(TeacherBase):
 
 
 class TeacherUpdate(TeacherBase):
-    pass
+    current_school: Optional[str] = None
+    alma_mater: Optional[str] = None
+    degree_level: Optional[str] = None
+    major: Optional[str] = None

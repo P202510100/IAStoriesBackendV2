@@ -119,6 +119,14 @@ class EnrollmentRepository(CRUDRepository[Enrollment]):
             })
         return result
 
+    def unenroll(self, db: Session, student_id: int, teacher_id: int):
+        enrollment = self.get_by_student_and_teacher(db, student_id, teacher_id)
+        if enrollment:
+            db.delete(enrollment)
+            db.commit()
+            return True
+        return False
+
 class AnswerRepository(CRUDRepository[Answer]):
     def __init__(self):
         super().__init__(Answer)

@@ -5,6 +5,7 @@ from typing import List
 from app.db.database import get_db
 from app.db.repositories import UserRepository
 from app.schemas.user import UserRead, UserUpdate
+from app.services.user_service import UserService
 
 router = APIRouter()
 user_repo = UserRepository()
@@ -22,7 +23,4 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
 
 @router.put("/{user_id}", response_model=UserRead)
 def update_user(user_id: int, payload: UserUpdate, db: Session = Depends(get_db)):
-    user = user_repo.get(db, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return user_repo.update(db, user, payload.dict(exclude_unset=True))
+    return UserService.update_user(db, user_id, payload)
