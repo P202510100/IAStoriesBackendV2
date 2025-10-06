@@ -3,7 +3,7 @@ from app.db.repositories import StoryRepository, StudentRepository
 import json
 
 from app.schemas import StoryGenerateRequest, RecordCreate, StoryRead, story
-from app.services.ai_service import generar_historia_y_preguntas
+from app.services.ai_service import generar_historia_preguntas_imagen
 from app.services.record_service import RecordService
 
 story_repo = StoryRepository()
@@ -24,7 +24,7 @@ class StoryService:
         grado = student.current_grade or "sin grado"
 
         # 2. Generar historia con IA usando los datos que vienen del frontend
-        ai_result = generar_historia_y_preguntas(
+        ai_result = generar_historia_preguntas_imagen(
             nombre=data.nombre,
             edad=data.edad,
             elementos=data.elementos,
@@ -40,6 +40,7 @@ class StoryService:
             "story_metadata": ai_result.get("story_metadata", {}),
             "characters": ai_result.get("characters", []),
             "student_id": student.id,
+            "image_b64": ai_result.get("image_b64")
         }
 
         story = story_repo.create(db, story_data)

@@ -64,6 +64,7 @@ class Story(Base):
     story_metadata = Column(JSON)
     characters = Column(JSON)
     student_id = Column(Integer, ForeignKey("students.id"))
+    image_b64 = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Record(Base):
