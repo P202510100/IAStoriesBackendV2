@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import date, datetime
 
@@ -20,8 +20,7 @@ class UserBase(BaseModel):
     email: str
     tipo: UserType
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class StudentRead(StudentBase):
     id: int
@@ -31,8 +30,8 @@ class StudentRead(StudentBase):
     current_level: int
     user: UserBase
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class StudentDetail(BaseModel):
     id: int
@@ -42,10 +41,10 @@ class StudentDetail(BaseModel):
     interests: Optional[str]
     total_points: int
     last_updated_date: Optional[datetime]
-    user: UserBase  # relación incluida
+    user: UserBase
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class StudentUpdate(StudentBase):
     birth_date: Optional[date] = None

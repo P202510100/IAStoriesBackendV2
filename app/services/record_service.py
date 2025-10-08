@@ -4,7 +4,7 @@ from app.schemas.answer import AnswerCreate
 from app.schemas.record import RecordCreate, RecordUpdate
 from app.models.models import Record as RecordModel
 from app.models.models import Answer
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import joinedload
 from typing import Optional, List
 
@@ -44,11 +44,11 @@ class RecordService:
         if not record:
             raise ValueError("Record no encontrado")
 
-        update_data = payload.dict(exclude_unset=True)
+        update_data = payload.model_dump(exclude_unset=True)
 
         # Si marcan como COMPLETED
         if update_data.get("status") == "COMPLETED":
-            update_data["completed_at"] = datetime.utcnow()
+            update_data["completed_at"] = datetime.now(timezone.utc)
 
             # Calcular puntos y correctas a partir de las respuestas
             answers = answer_repo.list_by_record(db, record_id)  # <-- necesitas este método en el repo
@@ -65,7 +65,7 @@ class RecordService:
             if student:
                 student_repo.update(db, student, {
                     "total_points": student.total_points + points,
-                    "last_updated_date": datetime.utcnow()
+                    "last_updated_date": datetime.now(timezone.utc)
                 })
 
         record = record_repo.update(db, record, update_data)

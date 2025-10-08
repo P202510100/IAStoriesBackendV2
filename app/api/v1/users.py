@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 from typing import List
 
@@ -22,5 +22,5 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     return user
 
 @router.put("/{user_id}", response_model=UserRead)
-def update_user(user_id: int, payload: UserUpdate, db: Session = Depends(get_db)):
+def update_user(user_id: int, payload: UserUpdate = Body(...), db: Session = Depends(get_db)):
     return UserService.update_user(db, user_id, payload)

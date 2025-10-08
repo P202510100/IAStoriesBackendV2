@@ -1,3 +1,4 @@
+from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 
@@ -13,9 +14,9 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str
     FREEPIK_API_KEY: str
 
-    class Config:
-        env_file = ".env"
+    model_config = ConfigDict(env_file=".env")
 
+#    f"postgresql://postgres:{settings.DB_PASS}@db.rsjtpijgsibxsczrpcjh.supabase.co:5432/postgres"
 
 settings = Settings()
 

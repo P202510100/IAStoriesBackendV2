@@ -33,7 +33,7 @@ class AuthService:
                 db,
                 {
                     "user_id": user.id,
-                    **user_in.student_profile.dict()
+                    **user_in.student_profile.model_dump()
                 }
             )
         elif user.tipo == UserType.teacher and user_in.teacher_profile:
@@ -41,7 +41,7 @@ class AuthService:
                 db,
                 {
                     "user_id": user.id,
-                    **user_in.teacher_profile.dict()
+                    **user_in.teacher_profile.model_dump()
                 }
             )
 

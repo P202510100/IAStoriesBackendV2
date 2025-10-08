@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Date, Text, Enum, JSON
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 import enum
 from app.db.base import Base
 
@@ -20,7 +20,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
     tipo = Column(Enum(UserType), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
     activo = Column(Boolean, default=True)
 
     student_profile = relationship("Student", back_populates="user", uselist=False)
@@ -35,7 +35,7 @@ class Student(Base):
     current_grade = Column(String(50))
     interests = Column(Text)
     total_points = Column(Integer, default=0)
-    last_updated_date = Column(DateTime, default=datetime.utcnow)
+    last_updated_date = Column(DateTime, default=datetime.now(timezone.utc))
     current_level = Column(Integer, default=1)
 
     user = relationship("User", back_populates="student_profile")
@@ -65,7 +65,7 @@ class Story(Base):
     characters = Column(JSON)
     student_id = Column(Integer, ForeignKey("students.id"))
     image_b64 = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
 
 class Record(Base):
     __tablename__ = "records"
@@ -99,8 +99,8 @@ class Answer(Base):
     question_index = Column(Integer, nullable=False)  # índice de la pregunta
     response = Column(Text, nullable=True)  # texto o índice seleccionado
     is_correct = Column(Boolean, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
 
     record = relationship("Record", back_populates="answers")
 
