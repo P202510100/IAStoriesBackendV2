@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     model_config = ConfigDict(env_file=".env")
 
-#    f"postgresql://postgres:{settings.DB_PASS}@db.rsjtpijgsibxsczrpcjh.supabase.co:5432/postgres"
+
 
 settings = Settings()
 
@@ -24,4 +24,5 @@ settings = Settings()
 SQLALCHEMY_DATABASE_URI = (
     f"postgresql+psycopg2://{settings.DB_USER}:{settings.DB_PASS}"
     f"@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+    #f"postgresql://postgres:{settings.DB_PASS}@db.rsjtpijgsibxsczrpcjh.supabase.co:5432/postgres"
 )

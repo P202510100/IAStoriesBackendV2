@@ -40,7 +40,7 @@ def test_register_user_creates_user_and_profile(monkeypatch):
     class DummyUserIn:
         fullname = "Test User"
         email = "test@test.com"
-        password = "123456789"
+        password = "1234567"
         tipo = UserType.student
         student_profile = DummyProfile()
         teacher_profile = None

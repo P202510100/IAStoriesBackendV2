@@ -128,3 +128,26 @@ class RecordService:
         # Hacemos commit al final para evitar race conditions
         db.commit()
         return saved
+
+    @staticmethod
+    def restart_exam(db: Session, record_id: int):
+        record = db.query(RecordModel).filter(RecordModel.id == record_id).first()
+        if not record:
+            raise ValueError("Record not found")
+
+        if record.has_restarted:
+            raise ValueError("Este examen ya fue reiniciado una vez. No se puede volver a reiniciar.")
+
+        # Borrar todas las respuestas
+        db.query(Answer).filter(Answer.record_id == record_id).delete()
+
+        # Reiniciar estado
+        record.status = "IN_PROGRESS"
+        record.correct_answers = 0
+        record.points = 0
+        record.completed_at = None
+        record.has_restarted = True  # marcar que ya usó el reinicio
+
+        db.commit()
+        db.refresh(record)
+        return record

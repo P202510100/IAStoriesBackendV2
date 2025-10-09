@@ -79,6 +79,8 @@ class Record(Base):
     completed_at = Column(DateTime, nullable=True)
     status = Column(Enum(RecordStatus), default=RecordStatus.IN_PROGRESS)
 
+    has_restarted = Column(Boolean, default=False)
+
     student = relationship("Student", back_populates="records")
     story = relationship("Story")
     answers = relationship("Answer", back_populates="record", cascade="all, delete-orphan")

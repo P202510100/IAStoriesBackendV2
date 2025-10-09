@@ -62,3 +62,10 @@ def save_progress(record_id: int, payload: List[AnswerCreate], db: Session = Dep
         return {"status": "ok", "answers_saved": len(saved)}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/{record_id}/restart", response_model=RecordRead)
+def restart_exam(record_id: int, db: Session = Depends(get_db)):
+    try:
+        return RecordService.restart_exam(db, record_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
