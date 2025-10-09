@@ -22,7 +22,7 @@ settings = Settings()
 
 # Construcción directa de la URI de conexión
 SQLALCHEMY_DATABASE_URI = (
-    f"postgresql+psycopg2://{settings.DB_USER}:{settings.DB_PASS}"
-    f"@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
-    #f"postgresql://postgres:{settings.DB_PASS}@db.rsjtpijgsibxsczrpcjh.supabase.co:5432/postgres"
+    #f"postgresql+psycopg2://{settings.DB_USER}:{settings.DB_PASS}"
+    #f"@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"
+    f"postgresql://postgres:{settings.DB_PASS}@db.rsjtpijgsibxsczrpcjh.supabase.co:5432/postgres"
 )
