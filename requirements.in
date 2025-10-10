@@ -1,0 +1,30 @@
+# requirements.in
+
+# Framework principal
+fastapi
+
+# Servidor ASGI
+uvicorn[standard]
+
+# Base de datos
+sqlalchemy
+psycopg2-binary
+alembic
+
+# Configuración y validación
+python-dotenv
+pydantic
+pydantic-settings
+email-validator
+
+# Seguridad
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+python-jose
+
+python-multipart
+openai
+
+# Utilidades
+requests
+loguru

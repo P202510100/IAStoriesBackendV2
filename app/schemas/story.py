@@ -16,7 +16,9 @@ class StoryCreate(StoryBase):
 class StoryRead(StoryBase):
     id: int
     created_at: datetime
+    image_b64: Optional[str] = None
     record_id: Optional[int] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 class StoryUpdate(StoryBase):

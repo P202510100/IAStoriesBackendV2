@@ -20,4 +20,4 @@ def update_teacher(teacher_id: int, payload: TeacherUpdate, db: Session = Depend
     teacher = teacher_repo.get(db, teacher_id)
     if not teacher:
         raise HTTPException(status_code=404, detail="Profesor no encontrado")
-    return teacher_repo.update(db, teacher, payload.dict(exclude_unset=True))
+    return teacher_repo.update(db, teacher, payload.model_dump(exclude_unset=True))

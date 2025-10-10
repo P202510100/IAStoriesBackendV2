@@ -3,7 +3,8 @@ from openai import OpenAI
 from app.core.config import settings
 
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
-
+FREEPIK_API_KEY = settings.FREEPIK_API_KEY
+FREEPIK_URL = "https://api.freepik.com/v1/ai/mystic"
 
 def generar_historia_y_preguntas(nombre: str, edad: int, elementos: str, grado: str, topic: str):
 

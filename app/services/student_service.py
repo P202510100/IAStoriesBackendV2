@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.repositories import StudentRepository
 from app.schemas.student import StudentUpdate
 from app.models.models import Student as StudentModel
-from datetime import datetime
+from datetime import datetime, timezone
 
 student_repo = StudentRepository()
 
@@ -15,8 +15,8 @@ class StudentService:
 
     @staticmethod
     def update_profile(db: Session, student: StudentModel, payload: StudentUpdate) -> StudentModel:
-        data = payload.dict(exclude_unset=True)
-        data["last_updated_date"] = datetime.utcnow()
+        data = payload.model_dump(exclude_unset=True)
+        data["last_updated_date"] = datetime.now(timezone.utc)
         return student_repo.update(db, student, data)
 
     @staticmethod

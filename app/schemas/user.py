@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional
 from datetime import datetime, date
 from app.models.models import UserType
@@ -39,12 +39,11 @@ class UserRead(UserBase):
     student_profile: Optional[StudentRead] = None
     teacher_profile: Optional[TeacherRead] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserUpdate(BaseModel):
     fullname: Optional[str]
     activo: Optional[bool]
-    email: Optional[str]
+    email: Optional[EmailStr] = None
     student_profile: Optional[StudentUpdate] = None
     teacher_profile: Optional[TeacherUpdate] = None
