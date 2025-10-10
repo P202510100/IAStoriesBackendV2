@@ -6,13 +6,13 @@ from app.models.models import UserType
 
 
 class StudentBase(BaseModel):
-    birth_date: Optional[date]
+    birth_date: Optional[date] = None
     current_grade: Optional[str] = Field(None, max_length=50)
-    interests: Optional[str]
+    interests: Optional[str] = None
 
 
 class StudentCreate(StudentBase):
-    pass
+    user_id: int
 
 class UserBase(BaseModel):
     id: int

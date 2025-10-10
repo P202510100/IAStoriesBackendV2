@@ -10,7 +10,7 @@ class TeacherBase(BaseModel):
 
 
 class TeacherCreate(TeacherBase):
-    pass
+    user_id: int
 
 
 class TeacherRead(TeacherBase):

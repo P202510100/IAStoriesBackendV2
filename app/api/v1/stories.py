@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.post("/", response_model=StoryRead)
 def create_story(payload: StoryCreate, db: Session = Depends(get_db)):
-    return StoryService.create_story(db, payload.dict())
+    return StoryService.create_story(db, payload.model_dump())
 
 @router.get("/", response_model=List[StoryRead])
 def list_stories(skip: int = 0, limit: int = 50, db: Session = Depends(get_db)):
