@@ -2,11 +2,12 @@ from sqlalchemy.orm import Session
 from app.db.repositories import RecordRepository, StudentRepository, StoryRepository, AnswerRepository
 from app.schemas.answer import AnswerCreate
 from app.schemas.record import RecordCreate, RecordUpdate
-from app.models.models import Record as RecordModel
-from app.models.models import Answer
+from app.models.models import Record as RecordModel, Student
+from app.models.models import Answer, User, Record
 from datetime import datetime, timezone
 from sqlalchemy.orm import joinedload
 from typing import Optional, List
+from sqlalchemy import func
 
 record_repo = RecordRepository()
 student_repo = StudentRepository()
@@ -151,3 +152,66 @@ class RecordService:
         db.commit()
         db.refresh(record)
         return record
+
+    @staticmethod
+    def get_class_ranking(db: Session):
+        """
+                Calcula el ranking general de la clase directamente desde la tabla Record,
+                incluyendo precisión promedio, total de historias y puntos globales.
+                """
+
+        # Subconsulta: sumar métricas por estudiante
+        results = (
+            db.query(
+                Student.id.label("student_id"),
+                User.fullname.label("nombre"),
+                func.sum(func.coalesce(Record.points, 0)).label("puntos"),
+                func.count(Record.id).filter(Record.status == "COMPLETED").label("historias"),
+                func.sum(func.coalesce(Record.correct_answers, 0)).label("correctas"),
+                func.sum(func.coalesce(Record.total_questions, 0)).label("preguntas")
+            )
+            .join(User, Student.user_id == User.id)
+            .join(Record, Record.student_id == Student.id)
+            .group_by(Student.id, User.fullname)
+            .all()
+        )
+
+        ranking = []
+        total_correct = 0
+        total_questions = 0
+        total_points = 0
+        total_histories = 0
+
+        for row in results:
+            correctas = row.correctas or 0
+            preguntas = row.preguntas or 0
+            precision = round((correctas / preguntas) * 100, 2) if preguntas > 0 else 0
+
+            ranking.append({
+                "id": row.student_id,
+                "nombre": row.nombre,
+                "puntos": row.puntos or 0,
+                "historias": row.historias or 0,
+                "precision": precision,
+                "respuestas_correctas": correctas,
+                "total_respuestas": preguntas
+            })
+
+            total_correct += correctas
+            total_questions += preguntas
+            total_points += row.puntos or 0
+            total_histories += row.historias or 0
+
+        promedio_clase = round((total_correct / total_questions) * 100, 2) if total_questions > 0 else 0
+
+        estadisticas = {
+            "promedioClase": promedio_clase,
+            "historiasTotal": total_histories,
+            "puntosTotal": total_points
+        }
+
+        # Orden descendente por puntos
+        ranking.sort(key=lambda x: x["puntos"], reverse=True)
+
+        return {"ranking": ranking, "estadisticas": estadisticas}
+

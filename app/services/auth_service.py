@@ -84,3 +84,68 @@ class AuthService:
         db.commit()
         db.refresh(user)
         return user
+
+    @staticmethod
+    def delete_user_and_data(db: Session, user_id: int):
+        """
+        Elimina completamente al usuario (student o teacher) y toda su data asociada.
+        """
+        from app.db.repositories import (
+            UserRepository,
+            StudentRepository,
+            TeacherRepository,
+            StoryRepository,
+            RecordRepository,
+            EnrollmentRepository,
+            AnswerRepository
+        )
+
+        user_repo = UserRepository()
+        student_repo = StudentRepository()
+        teacher_repo = TeacherRepository()
+        story_repo = StoryRepository()
+        record_repo = RecordRepository()
+        enrollment_repo = EnrollmentRepository()
+        answer_repo = AnswerRepository()
+
+        user = user_repo.get(db, user_id)
+        if not user:
+            raise ValueError("Usuario no encontrado")
+
+        # 🧩 Si es estudiante, eliminar toda su data dependiente
+        if user.tipo.value == "student":
+            student = student_repo.get_by_user_id(db, user.id)
+            if student:
+                # Eliminar answers -> records -> stories -> enrollments
+                records = db.query(record_repo.model).filter_by(student_id=student.id).all()
+                for record in records:
+                    answers = db.query(answer_repo.model).filter_by(record_id=record.id).all()
+                    for ans in answers:
+                        db.delete(ans)
+                    db.delete(record)
+
+                stories = db.query(story_repo.model).filter_by(student_id=student.id).all()
+                for story in stories:
+                    db.delete(story)
+
+                enrollments = db.query(enrollment_repo.model).filter_by(student_id=student.id).all()
+                for enr in enrollments:
+                    db.delete(enr)
+
+                db.delete(student)
+
+        # 🧩 Si es docente, eliminar sus enrollments y perfil
+        elif user.tipo.value == "teacher":
+            teacher = teacher_repo.get_by_user_id(db, user.id)
+            if teacher:
+                enrollments = db.query(enrollment_repo.model).filter_by(teacher_id=teacher.id).all()
+                for enr in enrollments:
+                    db.delete(enr)
+                db.delete(teacher)
+
+        # 🧩 Finalmente eliminar el usuario base
+        db.delete(user)
+        db.commit()
+
+        return {"message": f"Usuario {user.email} y toda su data fueron eliminados correctamente"}
+
