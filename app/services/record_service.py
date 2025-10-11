@@ -79,17 +79,32 @@ class RecordService:
         if not record:
             raise ValueError("Record no encontrado")
 
-        # ¿Ya había respuesta para esa pregunta?
+        # Verificar si la respuesta es correcta comparando con el JSON de la historia
+        story = record.story
+        questions = story.question_answer or []
+        question_data = questions[question_index] if question_index < len(questions) else None
+
+        correct_index = question_data.get("answer") if question_data else None
+        selected_index = None
+
+        try:
+            selected_index = int(response)
+        except (ValueError, TypeError):
+            pass
+
+        is_correct_auto = selected_index == correct_index
+
+        # Si se pasa explícitamente is_correct, usarlo. Si no, usar el calculado
+        is_correct = is_correct if is_correct is not None else is_correct_auto
+
         answer = answer_repo.get_by_record_and_question(db, record_id, question_index)
 
         if answer:
-            # Actualizar
             answer = answer_repo.update(db, answer, {
                 "response": response,
                 "is_correct": is_correct
             })
         else:
-            # Crear nueva
             answer = answer_repo.create(db, {
                 "record_id": record_id,
                 "question_index": question_index,

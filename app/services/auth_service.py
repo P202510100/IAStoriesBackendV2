@@ -149,3 +149,21 @@ class AuthService:
 
         return {"message": f"Usuario {user.email} y toda su data fueron eliminados correctamente"}
 
+    @staticmethod
+    def change_password(db: Session, user_id: int, current_password: str, new_password: str):
+        user = user_repo.get_by_id(db, user_id)
+        if not user:
+            raise ValueError("Usuario no encontrado")
+
+        if not verify_password(current_password, user.password):
+            raise ValueError("La contraseña actual es incorrecta")
+
+        if verify_password(new_password, user.password):
+            raise ValueError("La nueva contraseña no puede ser igual a la actual")
+
+        user.password = get_password_hash(new_password)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
+

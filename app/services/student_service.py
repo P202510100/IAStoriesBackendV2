@@ -39,4 +39,10 @@ class StudentService:
             raise ValueError("Estudiante no encontrado")
         return student
 
+    @staticmethod
+    def update_interests(db: Session, student_id: int, interests_list: list[str]):
+        interests_str = ", ".join(interests_list) if interests_list else ""
+        repo = StudentRepository()
+        return repo.update_interests(db, student_id, interests_str)
+
 
