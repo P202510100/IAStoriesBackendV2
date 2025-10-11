@@ -2,13 +2,22 @@ from typing import List
 
 from sqlalchemy.orm import Session
 from app.db.repositories import StudentRepository
-from app.schemas.student import StudentUpdate
+from app.schemas.student import StudentUpdate, StudentCreate
 from app.models.models import Student as StudentModel
 from datetime import datetime, timezone
 
 student_repo = StudentRepository()
 
 class StudentService:
+
+    @staticmethod
+    def create(db: Session, payload: StudentCreate) -> StudentModel:
+        student = StudentModel(**payload.model_dump())
+        db.add(student)
+        db.commit()
+        db.refresh(student)
+        return student
+
     @staticmethod
     def get_by_user_id(db: Session, user_id: int) -> StudentModel | None:
         return student_repo.get_by_user_id(db, user_id)

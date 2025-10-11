@@ -4,9 +4,17 @@ from typing import List
 
 from app.db.database import get_db
 from app.services.student_service import StudentService
-from app.schemas.student import StudentRead, StudentUpdate, StudentDetail
+from app.schemas.student import StudentRead, StudentUpdate, StudentDetail, StudentCreate
 
 router = APIRouter()
+
+@router.post("/", response_model=StudentRead)
+def create_student(payload: StudentCreate, db: Session = Depends(get_db)):
+    print("📥 Payload recibido en /students/:", payload.model_dump() if hasattr(payload, "dict") else payload)
+    student = StudentService.create(db, payload)
+    if not student:
+        raise HTTPException(status_code=400, detail="No se pudo crear el estudiante")
+    return student
 
 @router.get("/by-user/{user_id}", response_model=StudentRead)
 def get_student_by_user(user_id: int, db: Session = Depends(get_db)):

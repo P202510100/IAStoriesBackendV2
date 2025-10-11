@@ -30,6 +30,14 @@ class UserCreate(UserBase):
     student_profile: Optional[StudentProfileCreate] = None
     teacher_profile: Optional[TeacherProfileCreate] = None
 
+class EmailRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+    new_password: str
+
 class UserRead(UserBase):
     id: int
     tipo: UserType

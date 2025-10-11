@@ -62,3 +62,25 @@ class AuthService:
             subject=str(user.id),
             expires_delta=timedelta(minutes=expires_minutes)
         )
+
+    @staticmethod
+    def verify_email(db: Session, email: str) -> bool:
+        """Verifica si existe un usuario con ese correo."""
+        user = user_repo.get_by_email(db, str(email))
+        if not user:
+            raise ValueError("No existe una cuenta con ese correo.")
+        return True
+
+    @staticmethod
+    def reset_password(db: Session, email: str, new_password: str):
+        """Cambia la contraseña de un usuario existente."""
+        user = user_repo.get_by_email(db, str(email))
+        if not user:
+            raise ValueError("Usuario no encontrado")
+
+        hashed_pw = get_password_hash(new_password)
+        user.password = hashed_pw
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
