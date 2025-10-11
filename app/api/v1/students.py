@@ -4,9 +4,17 @@ from typing import List
 
 from app.db.database import get_db
 from app.services.student_service import StudentService
-from app.schemas.student import StudentRead, StudentUpdate, StudentDetail
+from app.schemas.student import StudentRead, StudentUpdate, StudentDetail, StudentCreate
 
 router = APIRouter()
+
+@router.post("/", response_model=StudentRead)
+def create_student(payload: StudentCreate, db: Session = Depends(get_db)):
+    print("📥 Payload recibido en /students/:", payload.model_dump() if hasattr(payload, "dict") else payload)
+    student = StudentService.create(db, payload)
+    if not student:
+        raise HTTPException(status_code=400, detail="No se pudo crear el estudiante")
+    return student
 
 @router.get("/by-user/{user_id}", response_model=StudentRead)
 def get_student_by_user(user_id: int, db: Session = Depends(get_db)):
@@ -32,3 +40,10 @@ def get_student_detail(student_id: int, db: Session = Depends(get_db)):
         return StudentService.get_student_detail(db, student_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+@router.put("/{student_id}/interests")
+def update_student_interests(student_id: int, interests: list[str], db: Session = Depends(get_db)):
+    updated = StudentService.update_interests(db, student_id, interests)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Estudiante no encontrado")
+    return {"message": "Intereses actualizados correctamente", "interests": updated.interests}

@@ -31,12 +31,26 @@ class StoryService:
             grado=grado,
             topic=data.topic
         )
+
+        # Normalización de preguntas
+        normalized_questions = []
+        tipos_validos = ["inferencial", "juicio_critico", "creativa"]
+
+        for i, q in enumerate(ai_result.get("questions", [])):
+            question = {
+                "question": q.get("question", f"Pregunta {i + 1}"),
+                "options": q.get("options", [])[:4],
+                "answer": q.get("answer", 0),
+                "type": q.get("type", tipos_validos[i % 3])
+            }
+            normalized_questions.append(question)
+
         # 3. Preparar objeto para BD
         story_data = {
             "title": ai_result["title"],
             "content": ai_result["content"],
             "topic": data.topic,
-            "question_answer": ai_result.get("questions", []),
+            "question_answer": normalized_questions,
             "story_metadata": ai_result.get("story_metadata", {}),
             "characters": ai_result.get("characters", []),
             "student_id": student.id,
@@ -49,7 +63,7 @@ class StoryService:
         record_payload = RecordCreate(
             story_id=story.id,
             correct_answers=0,
-            total_questions=len(ai_result.get("questions", [])),
+            total_questions=len(normalized_questions),
             points=0
         )
 

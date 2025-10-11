@@ -30,6 +30,14 @@ class UserCreate(UserBase):
     student_profile: Optional[StudentProfileCreate] = None
     teacher_profile: Optional[TeacherProfileCreate] = None
 
+class EmailRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+    new_password: str
+
 class UserRead(UserBase):
     id: int
     tipo: UserType
@@ -47,3 +55,11 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     student_profile: Optional[StudentUpdate] = None
     teacher_profile: Optional[TeacherUpdate] = None
+
+class PasswordChangeRequest(BaseModel):
+    user_id: int = Field(..., description="ID del usuario")
+    current_password: str = Field(..., min_length=6)
+    new_password: str = Field(..., min_length=6)
+
+class MessageResponse(BaseModel):
+    message: str

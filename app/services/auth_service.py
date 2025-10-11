@@ -62,3 +62,108 @@ class AuthService:
             subject=str(user.id),
             expires_delta=timedelta(minutes=expires_minutes)
         )
+
+    @staticmethod
+    def verify_email(db: Session, email: str) -> bool:
+        """Verifica si existe un usuario con ese correo."""
+        user = user_repo.get_by_email(db, str(email))
+        if not user:
+            raise ValueError("No existe una cuenta con ese correo.")
+        return True
+
+    @staticmethod
+    def reset_password(db: Session, email: str, new_password: str):
+        """Cambia la contraseña de un usuario existente."""
+        user = user_repo.get_by_email(db, str(email))
+        if not user:
+            raise ValueError("Usuario no encontrado")
+
+        hashed_pw = get_password_hash(new_password)
+        user.password = hashed_pw
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
+
+    @staticmethod
+    def delete_user_and_data(db: Session, user_id: int):
+        """
+        Elimina completamente al usuario (student o teacher) y toda su data asociada.
+        """
+        from app.db.repositories import (
+            UserRepository,
+            StudentRepository,
+            TeacherRepository,
+            StoryRepository,
+            RecordRepository,
+            EnrollmentRepository,
+            AnswerRepository
+        )
+
+        user_repo = UserRepository()
+        student_repo = StudentRepository()
+        teacher_repo = TeacherRepository()
+        story_repo = StoryRepository()
+        record_repo = RecordRepository()
+        enrollment_repo = EnrollmentRepository()
+        answer_repo = AnswerRepository()
+
+        user = user_repo.get(db, user_id)
+        if not user:
+            raise ValueError("Usuario no encontrado")
+
+        # 🧩 Si es estudiante, eliminar toda su data dependiente
+        if user.tipo.value == "student":
+            student = student_repo.get_by_user_id(db, user.id)
+            if student:
+                # Eliminar answers -> records -> stories -> enrollments
+                records = db.query(record_repo.model).filter_by(student_id=student.id).all()
+                for record in records:
+                    answers = db.query(answer_repo.model).filter_by(record_id=record.id).all()
+                    for ans in answers:
+                        db.delete(ans)
+                    db.delete(record)
+
+                stories = db.query(story_repo.model).filter_by(student_id=student.id).all()
+                for story in stories:
+                    db.delete(story)
+
+                enrollments = db.query(enrollment_repo.model).filter_by(student_id=student.id).all()
+                for enr in enrollments:
+                    db.delete(enr)
+
+                db.delete(student)
+
+        # 🧩 Si es docente, eliminar sus enrollments y perfil
+        elif user.tipo.value == "teacher":
+            teacher = teacher_repo.get_by_user_id(db, user.id)
+            if teacher:
+                enrollments = db.query(enrollment_repo.model).filter_by(teacher_id=teacher.id).all()
+                for enr in enrollments:
+                    db.delete(enr)
+                db.delete(teacher)
+
+        # 🧩 Finalmente eliminar el usuario base
+        db.delete(user)
+        db.commit()
+
+        return {"message": f"Usuario {user.email} y toda su data fueron eliminados correctamente"}
+
+    @staticmethod
+    def change_password(db: Session, user_id: int, current_password: str, new_password: str):
+        user = user_repo.get_by_id(db, user_id)
+        if not user:
+            raise ValueError("Usuario no encontrado")
+
+        if not verify_password(current_password, user.password):
+            raise ValueError("La contraseña actual es incorrecta")
+
+        if verify_password(new_password, user.password):
+            raise ValueError("La nueva contraseña no puede ser igual a la actual")
+
+        user.password = get_password_hash(new_password)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
+
