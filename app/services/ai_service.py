@@ -319,7 +319,7 @@ def generar_historia_y_preguntas_v2(nombre: str, edad: int, elementos: str, grad
     Ahora, genera la historia educativa/profesional.
     """
     response = client.chat.completions.create(
-        model="gpt-4o",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system",
              "content": "Eres un pedagogo especializado en literatura infantil y desarrollo de comprensión lectora. Generas historias educativas de alta calidad."},
