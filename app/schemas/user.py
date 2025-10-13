@@ -55,3 +55,11 @@ class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     student_profile: Optional[StudentUpdate] = None
     teacher_profile: Optional[TeacherUpdate] = None
+
+class PasswordChangeRequest(BaseModel):
+    user_id: int = Field(..., description="ID del usuario")
+    current_password: str = Field(..., min_length=6)
+    new_password: str = Field(..., min_length=6)
+
+class MessageResponse(BaseModel):
+    message: str

@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.security import get_password_hash
+from app.core.security import get_password_hash, get_current_user
 from app.models.models import User
 from app.db.database import get_db
-from app.schemas.user import UserCreate, UserRead, EmailRequest, PasswordResetRequest
+from app.schemas.user import UserCreate, UserRead, EmailRequest, PasswordResetRequest, PasswordChangeRequest, MessageResponse
 from app.services.auth_service import AuthService
 
 router = APIRouter()
@@ -48,3 +48,23 @@ def reset_password(request: PasswordResetRequest, db: Session = Depends(get_db))
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
+@router.delete("/delete-account", status_code=200)
+def delete_account(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Elimina completamente la cuenta del usuario autenticado (y toda su data asociada).
+    """
+    try:
+        result = AuthService.delete_user_and_data(db, current_user.id)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error eliminando cuenta: {str(e)}")
+
+@router.post("/change-password", response_model=MessageResponse)
+def change_password(request: PasswordChangeRequest, db: Session = Depends(get_db)):
+    try:
+        AuthService.change_password(db, request.user_id, request.current_password, request.new_password)
+        return {"message": "Contraseña actualizada correctamente"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

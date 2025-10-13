@@ -69,3 +69,11 @@ def restart_exam(record_id: int, db: Session = Depends(get_db)):
         return RecordService.restart_exam(db, record_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/ranking/class", summary="Obtener ranking general de la clase")
+def get_class_ranking(db: Session = Depends(get_db)):
+    try:
+        data = RecordService.get_class_ranking(db)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

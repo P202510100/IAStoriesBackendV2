@@ -11,6 +11,10 @@ class UserRepository(CRUDRepository[User]):
     def get_by_email(self, db: Session, email: str) -> Optional[User]:
         return db.query(User).filter(User.email == email).first()
 
+    def get_by_id(self, db: Session, user_id: int) -> Optional[User]:
+
+        return db.query(User).filter(User.id == user_id).first()
+
 class StudentRepository(CRUDRepository[Student]):
     def __init__(self):
         super().__init__(Student)
@@ -28,6 +32,16 @@ class StudentRepository(CRUDRepository[Student]):
             .filter(Student.id == student_id)
             .first()
         )
+
+    def update_interests(self, db: Session, student_id: int, interests_str: str):
+        student = db.query(Student).filter(Student.id == student_id).first()
+        if not student:
+            return None
+        student.interests = interests_str
+        db.add(student)
+        db.commit()
+        db.refresh(student)
+        return student
 
 class TeacherRepository(CRUDRepository[Teacher]):
     def __init__(self):
