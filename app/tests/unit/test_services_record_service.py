@@ -129,10 +129,16 @@ def test_save_answer_new(monkeypatch):
     monkeypatch.setattr("app.services.record_service.record_repo", fake_record_repo)
     monkeypatch.setattr("app.services.record_service.answer_repo", fake_answer_repo)
 
-    class DummyRecord: id = 1
+    # ✅ Dummy con story simulado
+    class DummyStory:
+        question_answer = [{"question": "¿?", "options": ["A", "B"], "answer": 0}]
+
+    class DummyRecord:
+        id = 1
+        story = DummyStory()
+
     fake_record_repo.get.return_value = DummyRecord()
     fake_answer_repo.get_by_record_and_question.return_value = None
-
     fake_answer_repo.create.return_value = {"id": 10, "response": "A"}
 
     result = RecordService.save_answer(fake_db, 1, 0, "A", True)
@@ -148,8 +154,17 @@ def test_save_answer_update_existing(monkeypatch):
     monkeypatch.setattr("app.services.record_service.record_repo", fake_record_repo)
     monkeypatch.setattr("app.services.record_service.answer_repo", fake_answer_repo)
 
-    class DummyRecord: id = 1
-    class DummyAnswer: id = 10
+    # ✅ Dummy con story simulado
+    class DummyStory:
+        question_answer = [{"question": "¿?", "options": ["A", "B"], "answer": 0}]
+
+    class DummyRecord:
+        id = 1
+        story = DummyStory()
+
+    class DummyAnswer:
+        id = 10
+
     fake_record_repo.get.return_value = DummyRecord()
     fake_answer_repo.get_by_record_and_question.return_value = DummyAnswer()
     fake_answer_repo.update.return_value = {"id": 10, "response": "B"}

@@ -55,7 +55,8 @@ class RecordRead(RecordBase):
     correct_answers: int
     total_questions: int
     completed_at: Optional[datetime] = None
-    status: str   # 👈 IN_PROGRESS o COMPLETED
+    status: str
+    has_restarted: Optional[bool] = False
     story: Optional["StoryRead"]
     answers: List[AnswerRead]
 
