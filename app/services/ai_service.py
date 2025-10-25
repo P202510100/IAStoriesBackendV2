@@ -371,37 +371,48 @@ def generar_historia_preguntas_imagen(nombre: str, edad: int, elementos: str, gr
     )
 
     headers = {
-        "x-freepik-api-key": f"{FREEPIK_API_KEY}",
+        "x-freepik-api-key": FREEPIK_API_KEY,
         "Content-Type": "application/json"
     }
 
-    response = requests.post(FREEPIK_URL, headers=headers, json={"prompt": prompt_img})
-
-    if response.status_code != 200:
-        historia["image_b64"] = None
+    try:
+        response = requests.post(FREEPIK_URL, headers=headers, json={"prompt": prompt_img}, timeout=20)
+        response.raise_for_status()
+        task_id = response.json()["data"]["task_id"]
+    except Exception as e:
+        print(f"⚠️ Error inicial al crear tarea de Freepik: {e}")
         return historia
 
-    task_id = response.json()["data"]["task_id"]
-
+    # Esperar hasta 60 segundos (~30 intentos de 2s)
     image_url = None
+    for intento in range(30):
+        try:
+            status_resp = requests.get(f"{FREEPIK_URL}/{task_id}", headers=headers, timeout=10)
+            status_resp.raise_for_status()
+            status_data = status_resp.json().get("data", {})
 
-    for _ in range(10):
-        status_resp = requests.get(f"{FREEPIK_URL}/{task_id}", headers=headers)
-        status_data = status_resp.json().get("data", {})
+            if status_data.get("status") == "COMPLETED" and status_data.get("generated"):
+                image_url = status_data["generated"][0]
+                break
+            elif status_data.get("status") == "FAILED":
+                print("❌ Generación fallida según Freepik API")
+                break
 
-        if status_data.get("status") == "COMPLETED" and status_data.get("generated"):
-            image_url = status_data["generated"][0]
-            break
-        time.sleep(2)
+        except Exception as e:
+            print(f"⚠️ Error consultando estado Freepik (intento {intento+1}): {e}")
+
+        time.sleep(2)  # esperar antes del siguiente intento
 
     if not image_url:
-        historia["image_b64"] = None
+        print("⚠️ No se obtuvo imagen tras reintentos. Usando fallback.")
         return historia
 
-    img_resp = requests.get(image_url)
-    if img_resp.status_code == 200:
+    try:
+        img_resp = requests.get(image_url, timeout=15)
+        img_resp.raise_for_status()
         historia["image_b64"] = base64.b64encode(img_resp.content).decode("utf-8")
-    else:
-        historia["image_b64"] = None
+    except Exception as e:
+        print(f"⚠️ Error descargando imagen generada: {e}")
 
     return historia
+

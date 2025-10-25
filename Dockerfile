@@ -25,7 +25,7 @@ RUN pip install --upgrade pip \
 COPY . .
 
 # Copiar archivo .env (si quieres usarlo dentro del contenedor)
-# ⚠️ En producción normalmente se usan variables de entorno inyectadas por la plataforma
+# En producción normalmente se usan variables de entorno inyectadas por la plataforma
 COPY .env .env
 
 # Exponer el puerto donde corre FastAPI

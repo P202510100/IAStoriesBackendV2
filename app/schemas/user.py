@@ -21,7 +21,7 @@ class TeacherProfileCreate(BaseModel):
     major: Optional[str] = None
 
 class UserBase(BaseModel):
-    fullname: str = Field(..., min_length=1, max_length=255)
+    fullname: str = Field(..., min_length=2, max_length=50)
     email: EmailStr
 
 class UserCreate(UserBase):

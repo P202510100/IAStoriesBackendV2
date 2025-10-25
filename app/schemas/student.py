@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, computed_field
 from typing import Optional
 from datetime import date, datetime
 
@@ -19,7 +19,7 @@ class UserBase(BaseModel):
     fullname: str
     email: str
     tipo: UserType
-
+    created_at: Optional[datetime]
     model_config = ConfigDict(from_attributes=True)
 
 class StudentRead(StudentBase):
@@ -33,9 +33,8 @@ class StudentRead(StudentBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class StudentDetail(BaseModel):
+class StudentDetail(StudentBase):
     id: int
-    edad: Optional[int] = None
     current_grade: Optional[str]
     current_level: Optional[int]
     interests: Optional[str]
@@ -44,6 +43,15 @@ class StudentDetail(BaseModel):
     user: UserBase
 
     model_config = ConfigDict(from_attributes=True)
+
+    @computed_field(return_type=int | None)
+    def edad(self) -> Optional[int]:
+        if self.birth_date:
+            today = date.today()
+            return today.year - self.birth_date.year - (
+            (today.month, today.day) < (self.birth_date.month, self.birth_date.day)
+            )
+        return None
 
 
 class StudentUpdate(StudentBase):
